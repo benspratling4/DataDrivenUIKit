@@ -28,18 +28,47 @@ To that end, I have begun writing this "Data-Driven UIKit" package, a (hopefully
 While SwiftUI has its `@State` in UIKit in iOS 13, these property wrappers literally do not work outside of SwiftUI `View`s, and part of the way they work is inherently struct-based.  Since working with UIKit means working with class-based UIViews, we'll just use Observable objects and published properties for all our value reading.
 We'll use `ObservableObject` / `ObservedObject` and `Published` / `Publisher` for reading values 
 
+Should it be `AsyncStream` based?
+
+
+Example: init a UILabel to dynamically update it's `text` from a `Publisher<String, Never>`.
+
+ ```swift
+ @Published var someText:String
+ ...
+ UILabel($someText)
+ ```
+
+It really is that simple! (from the calling code) And now you have a UILabel which will update it's value from the published String (don't forget your `@Published var` must be inside a class conforming to `ObservableObject`).  This uses the `convenience init(_ publisher:any Publisher<String, Never>)` from the `extension UILabel`.  There are others matching the `init` methods from `Text` for SwiftUI, namely  `init(verbatim content: String)`, and `init(_ key: LocalizedStringKey, tableName: String? = nil, bundle: Bundle? = nil, comment: StaticString? = nil)`, however, I recommend not using the `LocalizedStringKey` method, since the language doesn't seem to truly support resolving those outside the OS's internal implementaiton.
+
 
 
 ## (Dynamic) Cascading Style Sheets (but not CSS) for UIKit
 
-Sure, the `UIAppearance` protocols support the idea of cascading style sheets, but they aren't dyanmic.  That means, they aren't watching the value of a variable and adjusting accordingly. 
+Sure, the `UIAppearance` protocols support the idea of cascading style sheets, but they aren't dyanmic.  That means, they aren't watching the value of a variable and adjusting accordingly.  DataDrivenUIKit adds the ability to set cascade styles from Publishers.
 
 
-UILabel
-	Supported properties:
-		.foregroundColor, .maxNumberOfLines, .textAlignment
-		
-While these property names take on SwiftUI-centric names, they take on UIKit-centric values, such as UIColor, and NSTextAlignment
+In the simple case, you can set literals in a functional syntax, using the `.style(_, value:)` modifier:
+
+```swift
+ @Published var text:String = "Original"
+ ...
+ UILabel($text)
+	 .style(\.foregroundColor, value: .green)
+```
+
+But you can also provide a publisher to the value:
+
+
+```swift
+ @Published var textColor:UIColor = .green
+ ...
+ UILabel($text)
+	 .style(\.foregroundColor, from: $textColor)
+```
+
+Currently, `UILabel` supports  `.foregroundColor` (`UIColor`), `.maxNumberOfLines` (`Int?`), and `.multilineTextAlignment` (`NSTextAlignment`).  You'll notice these modifier names match up with SwiftUI names, while the values are usually typical UIKit values.  This in intentional.  SwiftUI reflects more than a decade's worth of refinement of typical bext-practices in how such values should be configured, and these updated modifier names reflect that.  However, we are fundamentally working with UIKit types, and those values will usually provide the least impedance mismatch with migrating code to UIKit.
+In the case of `.maxNumberOfLines` and `Int?` instead of an `Int`, keep in mind that UILabel's `.numberOfLines` property was cemented in stone long before Swift was invented, and thus the sentinel value of 0 has never been updated to be more Swift.
 
 
 ## Bindings for UITextField
@@ -61,16 +90,3 @@ TBD
 
 ## Examples
 
-
-### UILabel
-
-
-Currently, UILabel supports data-drivennes for the .text property, and cascading styles for foreground color, alignment and max number of lines.  Unlike other init methods for UILabel, these init methods set line break mode to byWordWrapping, and numberOfLines to 0.  
-
-```swift
- @Published var text:String = "Original"
- ...
- 
- UILabel($text)
-	 .style(\.foregroundColor, value: .green)
- ````
