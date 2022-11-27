@@ -15,7 +15,7 @@ To that end, I have begun writing this "Data-Driven UIKit" package, a (hopefully
 - [x] Cascading style sheets for UIViews, with functional callers and generic returns
 - [x] Data-driven UILabel, using Publishers to provide dynamic values
 - [ ] Data-Driven UIImageView, "" "" ""
-- [ ] Hot wires for horizontal and vertical stack views with alignments 
+- [x] Hot wires for horizontal and vertical stack views with alignments 
 - [ ] SwiftUI / WorkableUIKit -style buttons, with complete accessibility support
 - [ ] Bindings for UITextFields.
 - [ ] Dynamically inserted / removed / altered views based on conditional expressions
@@ -71,9 +71,32 @@ Currently, `UILabel` supports  `.foregroundColor` (`UIColor`), `.maxNumberOfLine
 In the case of `.maxNumberOfLines` and `Int?` instead of an `Int`, keep in mind that UILabel's `.numberOfLines` property was cemented in stone long before Swift was invented, and thus the sentinel value of 0 has never been updated to be more Swift.
 
 
+## Declarative `UIStackView`
+
+There is a fledgling implementation of declarativeness with `@resultBuilder` but implemented specifically for `UIStackView`s.  So far there is `UIVStack` and `UIHStack`, intended to function similarly to `VStack` and `HStack` (respectively) in SwiftUI, but both end up `init`ing an actual `UIStackView` from a sequence of either `UIView` or `Gap` in a result builder.
+
+```swift
+UIHStack(alignment:.firstBaseline) {
+	UILabel($text)
+	Gap(30.0)
+	UILabel("Contextual Text", comment:"Explanation for text")
+		.style(\.foregroundColor, value: .gray)
+	Gap()
+}
+```
+
+This example actually returns a `UIStackView` with its `.axis` set to `.horizontal`. 
+
+`Gap` is similar to SwiftUI's `Spacer`; explicit values in its init make fixed-width spaces, no value makes a flexible space.
+
+ Real view builders are a billion times more complicated than can be accomplished with the simple implementation, or even in the language, so expect this to improve (and thus change) significantly as other features are expressed.
+ 
+ Expect the `spacing` to change when it is added as an option. 
+
+
 ## Bindings for UITextField
 
-TBD
+TBD - Can we derive Bindings from Published?
 
 
 
